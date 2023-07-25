@@ -10,3 +10,5 @@ Correlate population allele frequencies and functional mutation effects with pro
 5. Fasta with CDS sequences with names matching transcript names
 
 # Running pipeline
+-Edit paths in `Process_PDB.sh` to give paths to input vcf,gff, transcript list, cds fasta.
+-Make sure all PDB files are in a PDB folder in your current directory
