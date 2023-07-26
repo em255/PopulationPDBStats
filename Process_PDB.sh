@@ -32,6 +32,7 @@ head -n 1  pLDDT/* > Protein_popstats.txt_header
 cat Protein_popstats.txt_header Protein_popstats.txt > Protein_popstats.txt_temp
 mv Protein_popstats.txt_temp Protein_popstats.txt
 rm Protein_popstats.txt_header
+bgzip Protein_popstats.txt
 
 #Get summary tables
 grep -v RefAllele prot_files/* > Protein_pLDDT.txt
@@ -39,3 +40,5 @@ head -n 1  prot_files/* > Protein_pLDDT.txt_header
 cat Protein_pLDDT.txt_header Protein_pLDDT.txt > Protein_pLDDT.txt_temp
 mv Protein_pLDDT.txt_temp Protein_pLDDT.txt
 rm Protein_pLDDT.txt_header
+bgzip Protein_pLDDT.txt
+
