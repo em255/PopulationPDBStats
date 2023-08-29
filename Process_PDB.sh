@@ -14,6 +14,7 @@ grep -v "#" out.frq | cut -f 6-  > freq_subcol_right.txt
 paste freq_subcol_left.txt snpstring.txt freq_subcol_right.txt > Freq_snpEFF.txt
 rm freq_subcol_left.txt freq_subcol_right.txt snpstring.txt
 
+###Initialize directories
 mkdir -p prot_files
 mkdir -p Freq
 mkdir -p dssp
