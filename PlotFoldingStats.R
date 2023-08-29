@@ -1,3 +1,4 @@
+###This script will create some diagnostic and analysis plots
 library(dplyr)
 library(data.table)
 library(ggplot2)
