@@ -10,5 +10,6 @@
 	5. Fasta with CDS sequences with names matching transcript names
 
 # Running pipeline
+	1. Install conda environment `conda env create -f PDB.yml`
 	1. Edit paths in `Process_PDB.sh` to give paths to input vcf,gff, transcript list, cds fasta.
 	2. Make sure all PDB files are in a PDB folder in your current directory
