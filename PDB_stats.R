@@ -8,9 +8,10 @@ library(stringr)
 print(args[1])
 ##Correct for the fact that PDB files are missing "-" option
 PDBfile <- args[1]
+PDB_dir <- args[2]
 #Reading in PDB file with extraneous header is difficult.  I just chop it down to the important ATOM part
-system(paste0("zcat PDB/",PDBfile,".pdb.gz | grep ATOM > PDB/",PDBfile,".pdb")) 
-PDB <- fread(paste0("PDB/",PDBfile,".pdb"),skip=0,fill=T)
+#system(paste0("zcat ",args[2],"/",PDBfile,".pdb.gz | grep ATOM > ",args[2],"/",PDBfile,".pdb")) 
+PDB <- fread(paste0(args[2],"/",PDBfile,".pdb"),skip=0,fill=T)
 print("PDB_files read in")
 colnames(PDB) <- c("Type","AtomNum","AtomChain","AminoAcid","INFO1","AA_Pos","X","Y","Z","INFO2","pLDDT","element")
 
@@ -23,7 +24,7 @@ PDB <- cbind.data.frame(PDB,Gene_pLDDT=mean(PDB$mean_pLDDT))
 
 
 ###Let's run dssp to get rASA
-system(paste0("mkdssp -i PDB/",PDBfile,".pdb | grep -A 100000 \"RESIDUE AA\" | cut -c 1-5,13-14,35-39 | grep -v \"\\!\" | awk '{print $1,$2,$3}' > dssp/",args[1],".dssp"))
+#system(paste0("mkdssp -i PDB/",PDBfile,".pdb | grep -A 100000 \"RESIDUE AA\" | cut -c 1-5,13-14,35-39 | grep -v \"\\!\" | awk '{print $1,$2,$3}' > dssp/",args[1],".dssp"))
 dsspfile <- read.table(paste0("dssp/",args[1],".dssp"),skip=1) 
 colnames(dsspfile) <- c("AA_Pos","AminoAcid_1let", "ASA")
 #Need to calculate relative ASA https://en.wikipedia.org/wiki/Relative_accessible_surface_area
@@ -130,6 +131,13 @@ BPDF <- BPDF %>% mutate(AA_ProportionPosition= AA_Pos/max(AA_Pos))
 
 #We write this file out because you may interested in the invarable portion of the proteins as well
 write.table(BPDF,paste0("prot_files/",args[1],".prt"),quote=F,col.names=T,row.names=F,sep="\t")
+
+
+
+
+
+if(as.logical(args[3])==TRUE){
+
 ### Read in Freq File
 ### This Freq File is going to be modified to include snpEFF annotation as a column, and for simplicity 
 ### be of the form "Chr, Pos, snpEFF, alternate Alleles frequencies. . . .
@@ -210,5 +218,7 @@ colnames(amino_acid_matrix) <- c("Alt_AA","Alt_FunctionalClass")
 BPDF <- left_join(BPDF,amino_acid_matrix)
 #remove snpEFF string to improve readability
 BPDF <- BPDF %>% select(-snpEFF)
-write.table(BPDF,paste0("pLDDT/",args[1],".AA.txt"),sep="\t",row.names=F,col.names=T,quote=F)
+write.table(BPDF,paste0("prot_files_mutation/",args[1],".AA.txt"),sep="\t",row.names=F,col.names=T,quote=F)
 
+
+}
