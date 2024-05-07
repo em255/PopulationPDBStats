@@ -1,0 +1,317 @@
+---
+title: "Plot_ProteinStructure_Stats"
+author: "EvanMLong"
+date: "2024-05-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+###This script will create some diagnostic and analysis plots
+#setwd("")
+
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(tidyr)
+library(Biostrings)
+library(ggpubr)
+###Read in Table of Variants sites with Protein Structure info
+AAFold <- fread("Protein_popstats.txt.gz")
+AAFold$Effect <- factor(AAFold$Effect,levels = c("LOW","MODERATE","HIGH") )
+AAFold <- AAFold[!is.na(AAFold$Effect),]
+###You can filter out Rare alleles for some better confidence
+AAFold_maf5 <- AAFold[AAFold$freqs>0.05 & AAFold$freqs<0.95]
+
+```
+
+
+```{r cars}
+### Get a gene level summary of folding
+gene_folding <- AAFold %>% group_by(transcript) %>%summarise(Gene_pLDDT=median(Gene_pLDDT))
+ggplot(gene_folding,aes(x=Gene_pLDDT))+
+  geom_histogram()+
+  ggtitle("Median AA Fold Confidence / Gene")
+```
+
+
+```{r}
+
+countdf <- cbind.data.frame(pLDDT=rep(seq(5,100,5),3),Effect=c(rep("HIGH",20),rep("MODERATE",20),rep("LOW",20)),Count=NA)
+for(x in seq(5,100,5)){
+  for (y in c("LOW","MODERATE","HIGH")) {
+    countdf[countdf$pLDDT==x & countdf$Effect==y,"Count"] <- sum(AAFold$mean_pLDDT > x-5 & AAFold$mean_pLDDT < x & AAFold$Effect==y)
+  }
+}
+countdf <- countdf %>% group_by(Effect) %>% mutate(Count=Count/sum(Count))
+countdf$Effect <- factor(countdf$Effect,levels = c("LOW","MODERATE","HIGH") )
+
+custom_palette <- c("blue", "#E9F631", "red")
+
+ggplot(countdf, aes(x = pLDDT, y = Count, fill = Effect)) + 
+  geom_bar(stat = "identity", position = "dodge", color = "black", alpha = 0.7) +  # Add black border and adjust transparency
+  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  labs(
+    x = "pLDDT",
+    y = "Proportion of SNPs in Class"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )
+
+ggplot(AAFold, aes(x = Effect, y = mean_pLDDT, fill = Effect)) + 
+    geom_boxplot(aes(fill=Effect))+  # Add black border and adjust transparency
+  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  labs(
+    y = "pLDDT",
+    x = "SNP Class"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )
+
+
+
+```
+
+```{r}
+
+
+countdf <- cbind.data.frame(AA_ProportionPosition=rep(seq(0.05,1.00,0.05),3),Effect=c(rep("HIGH",20),rep("MODERATE",20),rep("LOW",20)),Count=NA)
+for(x in seq(0.05,1.00,0.05)){
+  for (y in c("LOW","MODERATE","HIGH")) {
+    countdf[countdf$AA_ProportionPosition==x & countdf$Effect==y,"Count"] <- sum(AAFold$AA_ProportionPosition > x-0.05 & AAFold$AA_ProportionPosition < x & AAFold$Effect==y)
+  }
+}
+countdf <- countdf %>% group_by(Effect) %>% mutate(Count=Count/sum(Count))
+countdf$Effect <- factor(countdf$Effect,levels = c("LOW","MODERATE","HIGH") )
+ggplot(countdf, aes(x = AA_ProportionPosition, y = Count)) +
+  geom_bar(aes(fill = Effect), stat = "identity", position = "dodge") +
+  ylab("Proportion of SNPs in Class") +
+  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  labs(
+    x = "AA Relative Position",
+    y = "Proportion of SNPs in Class"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )+
+  facet_wrap(~Effect)
+
+```
+
+```{r}
+
+countdf <- cbind.data.frame(freqs=rep(seq(0.05,1.00,0.05),3),Effect=c(rep("HIGH",20),rep("MODERATE",20),rep("LOW",20)),Count=NA)
+for(x in seq(0.05,1.00,0.05)){
+  for (y in c("LOW","MODERATE","HIGH")) {
+    countdf[countdf$freqs==x & countdf$Effect==y,"Count"] <- sum(AAFold$freqs > x-0.05 & AAFold$freqs < x & AAFold$Effect==y)
+  }
+}
+countdf <- countdf %>% group_by(Effect) %>% mutate(Count=Count/sum(Count))
+countdf$Effect <- factor(countdf$Effect,levels = c("LOW","MODERATE","HIGH") )
+ggplot(countdf, aes(x = freqs, y = Count)) +
+  geom_bar(aes(fill = Effect), stat = "identity", position = "dodge") +
+  ylab("Proportion of SNPs in Class") +
+  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  labs(
+    x = "AA Relative Position",
+    y = "Proportion of SNPs in Class"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )+
+  facet_wrap(~Effect)
+
+```
+
+
+```{r}
+p1_pLDDT <- ggplot(AAFold,aes(x = MAF,y=mean_pLDDT,group=Effect))+
+  geom_smooth(aes(col=Effect))+
+  ylab("Proportion of SNPs in Class") +
+  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  labs(
+    x = "MAF",
+    y = "pLDDT"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )
+
+p2_rASA <- ggplot(AAFold,aes(x = MAF,y=rASA,group=Effect))+
+  geom_smooth(aes(col=Effect))+
+  ylab("Proportion of SNPs in Class") +
+  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  labs(
+    x = "MAF",
+    y = "rASA"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )
+print(ggarrange(p1_pLDDT,p2_rASA))
+```
+
+```{r}
+AAFold_Nonsyn <- AAFold %>% filter(Effect=="MODERATE") %>% filter(nchar(alleles)==1) %>% mutate(AA_sub_ClassChange=ifelse(Ref_FunctionalClass==Alt_FunctionalClass,"Conservative","Radical")) %>% filter(!is.na(AA_sub_ClassChange))
+p1_pLDDT <- ggplot(AAFold_Nonsyn,aes(x = MAF,y=mean_pLDDT,group=AA_sub_ClassChange))+
+  geom_smooth(aes(col=AA_sub_ClassChange))+
+  labs(
+    x = "MAF",
+    y = "pLDDT"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )
+
+p2_rASA <- ggplot(AAFold_Nonsyn,aes(x = MAF,y=rASA,group=AA_sub_ClassChange))+
+  geom_smooth(aes(col=AA_sub_ClassChange))+
+  labs(
+    x = "MAF",
+    y = "rASA"
+  ) +  # Adjust axis labels
+  theme_minimal() +  # Apply a minimal theme for cleaner appearance
+  theme(
+    legend.position = "bottom",  # Position legend at the bottom
+    legend.title = element_blank(),  # Remove legend title
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    axis.line = element_line(colour = "black")  # Set color of axis lines
+  )
+print(ggarrange(p1_pLDDT,p2_rASA))
+
+```
+
+```{r}
+data(BLOSUM62)
+substitute_abbreviations <- function(abbreviations) {
+  # Define a mapping of single-letter abbreviations to three-letter amino acid abbreviations
+  abbreviation_map <- c("A" = "Ala", "R" = "Arg", "N" = "Asn", "D" = "Asp", "C" = "Cys",
+                        "Q" = "Gln", "E" = "Glu", "G" = "Gly", "H" = "His", "I" = "Ile",
+                        "L" = "Leu", "K" = "Lys", "M" = "Met", "F" = "Phe", "P" = "Pro",
+                        "S" = "Ser", "T" = "Thr", "W" = "Trp", "Y" = "Tyr", "V" = "Val")
+
+  # Substitute the abbreviations
+  if (is.vector(abbreviations)) {
+    # Vector input
+    output <- sapply(abbreviations, function(x) abbreviation_map[[x]])
+  } else {
+    # Single abbreviation input
+    output <- abbreviation_map[[abbreviations]]
+  }
+
+  return(output)
+}
+
+#Get down to 20 standard AA
+BLOSUM62 <- BLOSUM62[1:20,1:20]
+colnames(BLOSUM62) <- toupper(substitute_abbreviations(colnames(BLOSUM62)))
+rownames(BLOSUM62) <- toupper(substitute_abbreviations(rownames(BLOSUM62)))
+
+
+
+AAFold_Nonsyn <- AAFold_Nonsyn %>% mutate(BLOSOM_Score=apply(AAFold_Nonsyn,1, function(x) BLOSUM62[x[7],x[20]]))
+# AAFold_Nonsyn <- AAFold_Nonsyn[AAFold_Nonsyn$BLOSOM_Score>-4,]
+# AAFold_Nonsyn <- AAFold_Nonsyn[AAFold_Nonsyn$BLOSOM_Score<4,]
+
+AAFold_Nonsyn$BLOSOM_Score <- as.numeric(AAFold_Nonsyn$BLOSOM_Score)
+
+p1_pLDDT <- ggplot(AAFold_Nonsyn,aes(x =MAF,y=mean_pLDDT,group=BLOSOM_Score))+
+  geom_smooth(aes(col=BLOSOM_Score))+
+  labs(
+    x = "MAF",
+    y = "rASA",
+    color = "BLOSOM Score"
+  ) +
+  scale_color_gradient2(low = "red", mid = "purple", high = "blue", midpoint = median(AAFold_Nonsyn$BLOSOM_Score)) +  # Set the color gradient
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black")
+  )
+
+p2_rASA <- ggplot(AAFold_Nonsyn,aes(x =MAF,y=rASA,group=BLOSOM_Score))+
+  geom_smooth(aes(col=BLOSOM_Score))+
+  labs(
+    x = "MAF",
+    y = "rASA",
+    color = "BLOSOM Score"
+  ) +
+  scale_color_gradient2(low = "red", mid = "purple", high = "blue", midpoint = median(AAFold_Nonsyn$BLOSOM_Score)) +  # Set the color gradient
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black")
+  )
+
+
+print(ggarrange(p1_pLDDT,p2_rASA))
+
+
+```
+
+```{r}
+#AAFold <- fread("Protein_pLDDT.txt.gz")
+colnames(AAFold)
+AAFold <- AAFold %>% select(mean_pLDDT, rASA, AA_ProportionPosition, FourFoldDegenerate, AminoAcid_1let)
+
+library(hrbrthemes)
+
+#pdf(file="FoldingConfidence_byposition.pdf")
+ggplot(AAFold,aes(x = AA_ProportionPosition))+
+  geom_smooth(aes(y=rASA),col="blue")+
+  geom_smooth(aes(y=mean_pLDDT/100),col="red")+
+  scale_y_continuous(
+    # Features of the first axis
+    name = "rASA",
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~.,name="pLDDT")
+  ) + 
+  theme_ipsum() +
+  theme(
+    axis.title.y = element_text(color = "blue", size=13),
+    axis.title.y.right = element_text(color = "red", size=13)
+  ) +
+  ggtitle("pLDDT&rASA by AA position")+
+  xlab("AA position")
+#dev.off()
+```
