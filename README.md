@@ -18,7 +18,7 @@ This repo provides a pipeline that generates a genomewide analysis of protein st
    conda env create -f PDB_Tools.yml
    conda env create -f dssp.yml
    ```
-(If dssp is giving you issues it may be required to install with some channel hierarchy with this command: `conda create -n dssp --strict-channel-priority -c anaconda -c salilab 'libboost=1.73.0' dss`)
+(If dssp is giving you issues it may be required to install with some channel hierarchy with this command: `conda create -n dssp --strict-channel-priority -c anaconda -c salilab 'libboost=1.73.0' dssp`)
 
 2. Edit paths in "Process_PDB.sh" to give paths to input gff, transcript list, cds fasta (and snpEFF annotated vcf if applicable).
 3. Run Pipeline
