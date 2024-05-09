@@ -27,7 +27,7 @@ threads=10
 
 ##Combine freq files with snpEFF string
 vcftools --gzvcf $snpEffVCF --freq 
-cut -f 8 $snpEffVCF |  grep -v "#" > snpstring.txt
+zcat $snpEffVCF | cut -f 8 |  grep -v "#" > snpstring.txt
 grep -v "#" out.frq | cut -f 1,2 > freq_subcol_left.txt
 grep -v "#" out.frq | cut -f 6-  > freq_subcol_right.txt
 paste freq_subcol_left.txt snpstring.txt freq_subcol_right.txt > Freq_snpEFF.txt
