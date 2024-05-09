@@ -57,13 +57,13 @@ cat $transcipt_list | xargs -P $threads -I % Rscript $pathtorepo/PDB_stats.R % $
 
 if [ "$PopData" = "TRUE" ]; then
 #Get summary table of Population data & Protein Structure
-	cat prot_files_mutation/* | head -n 1   > Protein_popstats.txt
-	cat prot_files_mutation/* | grep -v RefAllele >> Protein_popstats.txt
-	bgzip -f Protein_popstats.txt
+	cat prot_files_mutation/* | head -n 1   > Protein_popMutationstats.txt
+	cat prot_files_mutation/* | grep -v RefAllele >> Protein_popMutationstats.txt
+	bgzip -f Protein_popMutationstats.txt
 fi
 
 #Get summary table of Protein Structure Info
-cat prot_files/* |head -n 1  > Protein_prot_files_mutation.txt
-cat prot_files/* | grep -v RefAllele >> Protein_prot_files_mutation.txt
-bgzip -f Protein_prot_files_mutation.txt
+cat prot_files/* |head -n 1  > Protein_Structure.txt
+cat prot_files/* | grep -v RefAllele >> Protein_Structure.txt
+bgzip -f Protein_Structure.txt
 
