@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 ###This script will create some diagnostic and analysis plots
-#setwd("")
+setwd("C:/Users/Evan/Desktop/test")
 
 library(dplyr)
 library(data.table)
@@ -129,7 +129,7 @@ ggplot(countdf, aes(x = freqs, y = Count)) +
   ylab("Proportion of SNPs in Class") +
   scale_fill_manual(values = custom_palette) +  # Use custom color palette
   labs(
-    x = "AA Relative Position",
+    x = "MAF",
     y = "Proportion of SNPs in Class"
   ) +  # Adjust axis labels
   theme_minimal() +  # Apply a minimal theme for cleaner appearance
@@ -146,10 +146,15 @@ ggplot(countdf, aes(x = freqs, y = Count)) +
 
 
 ```{r}
+
+custom_palette <- c("blue", "#E9F631", "red")
+
+AAFold
+
 p1_pLDDT <- ggplot(AAFold,aes(x = MAF,y=mean_pLDDT,group=Effect))+
   geom_smooth(aes(col=Effect))+
   ylab("Proportion of SNPs in Class") +
-  scale_fill_manual(values = custom_palette) +  # Use custom color palette
+  scale_color_manual(values = custom_palette) +  # Use custom color palette
   labs(
     x = "MAF",
     y = "pLDDT"
@@ -163,10 +168,10 @@ p1_pLDDT <- ggplot(AAFold,aes(x = MAF,y=mean_pLDDT,group=Effect))+
     axis.line = element_line(colour = "black")  # Set color of axis lines
   )
 
-p2_rASA <- ggplot(AAFold,aes(x = MAF,y=rASA,group=Effect))+
-  geom_smooth(aes(col=Effect))+
+p2_rASA <- ggplot(AAFold, aes(x = MAF, y = rASA, group = Effect)) +
+  geom_smooth(aes(color = Effect)) +  # Use color aesthetic for geom_smooth
+  scale_color_manual(values = custom_palette) +  # Use custom color palette
   ylab("Proportion of SNPs in Class") +
-  scale_fill_manual(values = custom_palette) +  # Use custom color palette
   labs(
     x = "MAF",
     y = "rASA"
@@ -179,13 +184,19 @@ p2_rASA <- ggplot(AAFold,aes(x = MAF,y=rASA,group=Effect))+
     panel.grid.minor = element_blank(),  # Remove minor gridlines
     axis.line = element_line(colour = "black")  # Set color of axis lines
   )
+p2_rASA
 print(ggarrange(p1_pLDDT,p2_rASA))
 ```
 
 ```{r}
+
+custom_palette <- c("blue", "red")
+
+
 AAFold_Nonsyn <- AAFold %>% filter(Effect=="MODERATE") %>% filter(nchar(alleles)==1) %>% mutate(AA_sub_ClassChange=ifelse(Ref_FunctionalClass==Alt_FunctionalClass,"Conservative","Radical")) %>% filter(!is.na(AA_sub_ClassChange))
 p1_pLDDT <- ggplot(AAFold_Nonsyn,aes(x = MAF,y=mean_pLDDT,group=AA_sub_ClassChange))+
   geom_smooth(aes(col=AA_sub_ClassChange))+
+  scale_color_manual(values = custom_palette) + 
   labs(
     x = "MAF",
     y = "pLDDT"
@@ -201,6 +212,7 @@ p1_pLDDT <- ggplot(AAFold_Nonsyn,aes(x = MAF,y=mean_pLDDT,group=AA_sub_ClassChan
 
 p2_rASA <- ggplot(AAFold_Nonsyn,aes(x = MAF,y=rASA,group=AA_sub_ClassChange))+
   geom_smooth(aes(col=AA_sub_ClassChange))+
+  scale_color_manual(values = custom_palette) + 
   labs(
     x = "MAF",
     y = "rASA"
@@ -290,14 +302,14 @@ print(ggarrange(p1_pLDDT,p2_rASA))
 ```
 
 ```{r}
-#AAFold <- fread("Protein_pLDDT.txt.gz")
+AAFold_tot <- fread("Protein_pLDDT.txt.gz")
 colnames(AAFold)
-AAFold <- AAFold %>% select(mean_pLDDT, rASA, AA_ProportionPosition, FourFoldDegenerate, AminoAcid_1let)
+AAFold_tot <- AAFold %>% select(mean_pLDDT, rASA, AA_ProportionPosition, FourFoldDegenerate, AminoAcid_1let)
 
 library(hrbrthemes)
 
 #pdf(file="FoldingConfidence_byposition.pdf")
-ggplot(AAFold,aes(x = AA_ProportionPosition))+
+ggplot(AAFold_tot,aes(x = AA_ProportionPosition))+
   geom_smooth(aes(y=rASA),col="blue")+
   geom_smooth(aes(y=mean_pLDDT/100),col="red")+
   scale_y_continuous(
