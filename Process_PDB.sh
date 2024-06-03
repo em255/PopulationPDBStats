@@ -24,15 +24,16 @@ threads=10
 ###Now that arguments are set we can run through the pipeline
 
 
+if [ "$PopData" = "TRUE" ]; then
 
-##Combine freq files with snpEFF string
-vcftools --gzvcf $snpEffVCF --freq 
-zcat $snpEffVCF | cut -f 8 |  grep -v "#" > snpstring.txt
-grep -v "#" out.frq | cut -f 1,2 > freq_subcol_left.txt
-grep -v "#" out.frq | cut -f 6-  > freq_subcol_right.txt
-paste freq_subcol_left.txt snpstring.txt freq_subcol_right.txt > Freq_snpEFF.txt
-rm freq_subcol_left.txt freq_subcol_right.txt snpstring.txt
-
+	##Combine freq files with snpEFF string
+	vcftools --gzvcf $snpEffVCF --freq 
+	zcat $snpEffVCF | cut -f 8 |  grep -v "#" > snpstring.txt
+	grep -v "#" out.frq | cut -f 1,2 > freq_subcol_left.txt
+	grep -v "#" out.frq | cut -f 6-  > freq_subcol_right.txt
+	paste freq_subcol_left.txt snpstring.txt freq_subcol_right.txt > Freq_snpEFF.txt
+	rm freq_subcol_left.txt freq_subcol_right.txt snpstring.txt
+fi
 ###Initialize directories
 mkdir -p prot_files
 mkdir -p Freq
