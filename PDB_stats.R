@@ -13,15 +13,16 @@ PDB_dir <- args[2]
 #system(paste0("zcat ",args[2],"/",PDBfile,".pdb.gz | grep ATOM > ",args[2],"/",PDBfile,".pdb")) 
 PDB <- fread(paste0(args[2],"/",PDBfile,".pdb"),skip=0,fill=T)
 print("PDB_files read in")
+print(PDB)
 colnames(PDB) <- c("Type","AtomNum","AtomChain","AminoAcid","INFO1","AA_Pos","X","Y","Z","INFO2","pLDDT","element")
-
+#print(PDB)
 #Just in case that didn't grab everything correctly, filtere down to ATOM part of the table
 PDB <- PDB[PDB$Type=="ATOM",]
 #Summarize pLDDT for all atoms in each amino acid
 PDB <- PDB %>% group_by(AA_Pos,AminoAcid) %>% summarize(mean_pLDDT=mean(as.numeric(pLDDT))) 
 #Add a column for the total average for the gene
 PDB <- cbind.data.frame(PDB,Gene_pLDDT=mean(PDB$mean_pLDDT))
-
+write.table(PDB,"temp_PDB",sep="\t",quote=F,col.names=T,row.names=F)
 
 ###Let's run dssp to get rASA
 #system(paste0("mkdssp -i PDB/",PDBfile,".pdb | grep -A 100000 \"RESIDUE AA\" | cut -c 1-5,13-14,35-39 | grep -v \"\\!\" | awk '{print $1,$2,$3}' > dssp/",args[1],".dssp"))
@@ -99,9 +100,24 @@ if(gff_adj[1,7]=="-")
 
 	CodonPos_vec[CodonPos_vec==0] <- 3
 #Create df with CDS information paired with AA information
+
+basepair_vec <- basepair_vec[1:length(FastaCDS)]
+AAPos_vec <- AAPos_vec[1:length(FastaCDS)]
+CodonPos_vec <- CodonPos_vec[1:length(FastaCDS)]
+
+print("is this my problem?-BPDF")
+#print(gff[1,1])
+#print(basepair_vec)
+#print(args[1])
+#print(toupper(FastaCDS))
+#print(AAPos_vec)
+#print(CodonPos_vec)
+print(args[1])
 	BPDF <- cbind.data.frame(gff[1,1],basepair_vec,args[1],RefAllele=toupper(FastaCDS),AAPos_vec,CodonPos_vec)
 	colnames(BPDF) <- c("Chr","Pos","transcript","RefAllele","AA_Pos","CodonPos")
 # Join with PDB file to correlate bp and AA to folding confidence
+	BPDF$AA_Pos <- as.integer(BPDF$AA_Pos)
+	PDB$AA_Pos <- as.integer(PDB$AA_Pos)
 	BPDF <- left_join(BPDF,PDB)
 #Add in stop codons
 	BPDF$AminoAcid[is.na(BPDF$AminoAcid)] <- "STOP"
@@ -109,6 +125,8 @@ if(gff_adj[1,7]=="-")
 	BPDF$mean_pLDDT <- round(BPDF$mean_pLDDT,2)
 	BPDF$Chr <- as.character(BPDF$Chr)
 #Join with rASA calculations
+	dsspfile$AA_Pos <- as.integer(dsspfile$AA_Pos)
+	BPDF$AA_Pos <- as.integer(BPDF$AA_Pos)
 	BPDF <- inner_join(BPDF,dsspfile)
 #Label sites as 4 fold degenerate
 isdegenerate <- function(BPDF){
@@ -126,6 +144,7 @@ return(FourDsites)
 }
 
 FourD_vector <- isdegenerate(BPDF)
+print("is this my problem?-1")
 BPDF <- cbind.data.frame(BPDF,FourFoldDegenerate=FourD_vector)
 BPDF <- BPDF %>% mutate(AA_ProportionPosition= AA_Pos/max(AA_Pos))
 
@@ -142,6 +161,7 @@ if(as.logical(args[3])==TRUE){
 ### This Freq File is going to be modified to include snpEFF annotation as a column, and for simplicity 
 ### be of the form "Chr, Pos, snpEFF, alternate Alleles frequencies. . . .
 freq <- fread(paste0("Freq/",args[1],".frq"), fill=T, sep="\t")
+if(nrow(freq)>1){
 freq[freq==""] <- NA
 freq[freq=="NA"] <- NA
 
@@ -160,6 +180,8 @@ spreadFreq <- function(freqsite){
   colnames(freqdf) <- c("Chr",  "Pos","snpEFF" ,"alleles","freqs")
   return(freqdf)
 }
+print("is this my problem?-freq")
+#print(freq)
 freq <- bind_rows(apply(freq,1,function(y) spreadFreq(y)), .id = "column_label")
 freq <- freq %>% select(-column_label) %>% filter(!grepl("\\*",alleles)) %>% filter(!is.na(alleles)) %>% filter(freqs!=0 & freqs!=1) %>% mutate(MAF=ifelse(as.numeric(as.character(freqs)) < 0.5,as.numeric(as.character(freqs)),1-as.numeric(as.character(freqs))))
 
@@ -173,6 +195,7 @@ ParseAllele <- function(SNPEFFstring){
 }
 
 Get_snpEFF_effect <- function(freqsite_parsed,gene){
+ # print(freqsite_parsed[3])
   LoF_Vec <- strsplit(freqsite_parsed[3],split = ",")[[1]]
   LoF_Vec_gene <- LoF_Vec[grepl(gene,LoF_Vec)]
   AllIdent <- sapply(LoF_Vec_gene, function(x) ParseAllele(x))
@@ -200,6 +223,8 @@ freq <- cbind.data.frame(freq,Effect=apply(freq,1,function(x) Get_snpEFF_effect(
 freq$Pos <- as.numeric(as.character(freq$Pos))
 
 #Join PDB/AA info with frequency/snpEFF information
+
+print("is this my problem?")
 BPDF <- inner_join(BPDF,freq)
 
 # Create a matrix with uppercase amino acid abbreviations and functional classes
@@ -215,10 +240,14 @@ amino_acid_matrix <- cbind.data.frame(AminoAcid=as.character(amino_acids), Ref_F
 BPDF$AminoAcid <- as.character(BPDF$AminoAcid)
 BPDF <- inner_join(BPDF,amino_acid_matrix)
 colnames(amino_acid_matrix) <- c("Alt_AA","Alt_FunctionalClass")
+print("is this my problem? last join")
+#print(head(amino_acid_matrix))
+#print(head(BPDF))
+BPDF$Alt_AA <- as.factor(as.character(BPDF$Alt_AA))
 BPDF <- left_join(BPDF,amino_acid_matrix)
 #remove snpEFF string to improve readability
 BPDF <- BPDF %>% select(-snpEFF)
 write.table(BPDF,paste0("prot_files_mutation/",args[1],".AA.txt"),sep="\t",row.names=F,col.names=T,quote=F)
 
-
+}
 }
