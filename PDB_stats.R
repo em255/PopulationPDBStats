@@ -22,8 +22,9 @@ PDB <- PDB[PDB$Type=="ATOM",]
 PDB <- PDB %>% group_by(AA_Pos,AminoAcid) %>% summarize(mean_pLDDT=mean(as.numeric(pLDDT))) 
 #Add a column for the total average for the gene
 PDB <- cbind.data.frame(PDB,Gene_pLDDT=mean(PDB$mean_pLDDT))
-write.table(PDB,"temp_PDB",sep="\t",quote=F,col.names=T,row.names=F)
-
+#toubleshooting file
+#write.table(PDB,"temp_PDB",sep="\t",quote=F,col.names=T,row.names=F)
+#
 ###Let's run dssp to get rASA
 #system(paste0("mkdssp -i PDB/",PDBfile,".pdb | grep -A 100000 \"RESIDUE AA\" | cut -c 1-5,13-14,35-39 | grep -v \"\\!\" | awk '{print $1,$2,$3}' > dssp/",args[1],".dssp"))
 dsspfile <- read.table(paste0("dssp/",args[1],".dssp"),skip=1) 
